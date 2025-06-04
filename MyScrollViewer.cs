@@ -1,5 +1,7 @@
 ﻿using EleCho.WpfSuite;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -40,6 +42,12 @@ public class MyScrollViewer : ScrollViewer
         this.PanningDeceleration = 0; // 禁用默认惯性
 
         StylusTouchDevice.SetSimulate(this, true);
+
+        DependencyPropertyDescriptor
+                .FromProperty(VerticalOffsetProperty, typeof(ScrollViewer))
+                .AddValueChanged(this, HandleExternalScrollChanged);
+
+        Unloaded += ScrollViewer_Unloaded;
     }
     //记录参数
     private int _lastScrollingTick = 0, _lastScrollDelta = 0;
@@ -48,6 +56,32 @@ public class MyScrollViewer : ScrollViewer
     //标志位
     private bool _isRenderingHooked = false;
     private bool _isAccuracyControl = false;
+    private bool _isInternalScrollChange = false;
+
+    private void ScrollViewer_Unloaded(object sender, RoutedEventArgs e)
+    {
+        DependencyPropertyDescriptor
+            .FromProperty(VerticalOffsetProperty, typeof(ScrollViewer))
+            .RemoveValueChanged(this, HandleExternalScrollChanged);
+
+        if (_isRenderingHooked)
+        {
+            CompositionTarget.Rendering -= OnRendering;
+            _isRenderingHooked = false;
+        }
+    }
+
+    /// <summary>
+    /// 处理外部滚动事件，更新当前偏移量
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    private void HandleExternalScrollChanged(object? sender, EventArgs e)
+    {
+        if (!_isInternalScrollChange)
+            _currentOffset = VerticalOffset;
+    }
+
     protected override void OnManipulationDelta(ManipulationDeltaEventArgs e)
     {
         base.OnManipulationDelta(e);    //如果没有这一行则不会触发ManipulationCompleted事件??
@@ -105,7 +139,10 @@ public class MyScrollViewer : ScrollViewer
         _isAccuracyControl = IsTouchpadScroll(e);
 
         if (_isAccuracyControl)
+        {
+            _targetVelocity = 0; // 防止下一次触发缓动模型时继承没有消除的速度，造成滚动异常
             _targetOffset = Math.Clamp(_currentOffset - e.Delta, 0, ScrollableHeight);
+        }
         else
             _targetVelocity += -e.Delta * VelocityFactor;// 鼠标滚动，叠加速度（惯性滚动）
 
@@ -144,8 +181,16 @@ public class MyScrollViewer : ScrollViewer
             _currentOffset = Math.Clamp(_currentOffset + _targetVelocity * (1.0 / 60), 0, ScrollableHeight);
         }
 
-        ScrollToVerticalOffset(_currentOffset);
+        InternalScrollToVerticalOffset(_currentOffset);
     }
+
+    private void InternalScrollToVerticalOffset(double offset)
+    {
+        _isInternalScrollChange = true;
+        ScrollToVerticalOffset(offset);
+        _isInternalScrollChange = false;
+    }
+
 
     private void StopRendering()
     {
