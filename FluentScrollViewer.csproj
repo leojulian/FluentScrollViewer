@@ -8,4 +8,8 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="TomsToolbox.Wpf" Version="2.22.1" />
+  </ItemGroup>
+
 </Project>

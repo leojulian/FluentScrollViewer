@@ -4,15 +4,44 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:local="clr-namespace:FluentScrollViewer"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        Title="MainWindow"
-        Width="800"
-        Height="450"
-        mc:Ignorable="d">
+        xmlns:toms="urn:TomsToolbox"
+        Title="ScrollViewer Performance Test"
+        Width="900"
+        Height="800"
+        mc:Ignorable="d"
+        WindowStartupLocation="CenterScreen">
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="MyScrollViewer" Grid.Column="0" HorizontalAlignment="Center"/>
         <local:MyScrollViewer PanningMode="Both"
                               PanningDeceleration="0.001"
-                              PanningRatio="1.0">
+                              PanningRatio="1.0"
+                              Grid.Column="0"
+                              Grid.Row="1">
             <StackPanel x:Name="panel" Orientation="Vertical" />
         </local:MyScrollViewer>
+
+        <TextBlock Text="ScrollViewer normal" Grid.Column="1" HorizontalAlignment="Center"/>
+        <Grid Grid.Column="1" Grid.Row="1">
+            <ScrollViewer>
+                <StackPanel x:Name="panel_Normal" Orientation="Vertical" />
+            </ScrollViewer>
+        </Grid>
+
+        <TextBlock Text="ScrollViewer with Toms" Grid.Column="2" HorizontalAlignment="Center"/>
+        <Grid Grid.Column="2" Grid.Row="1">
+            <ScrollViewer toms:AdvancedScrollWheelBehavior.Attach="WithAnimation">
+                <StackPanel x:Name="panel_Tom" Orientation="Vertical" />
+            </ScrollViewer>
+        </Grid>
     </Grid>
 </Window>
